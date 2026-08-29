@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-dark: #0d1b4c;
+  --color-brand-text: #1c1c1e;
+  --color-brand-muted: #9aa0a6;
+  --color-brand-border: #e2e4e8;
+
+  --color-primary: #0d1b4c;
+  --color-background: #eceef1;
+  --color-textDark: #1c1c1e;
+  --color-textGray: #4a4d52;
+  --color-textLight: #9aa0a6;
+  --color-accent: #2f4de0;
+  --color-borderGray: #f2f3f5;
+  --color-imageBg: #cfd3d8;
+  --color-imageBorder: #b9bec5;
+
+  --animate-marquee: marquee 12s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+}

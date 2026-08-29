@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>page-2db7522e-13d7-4fc5-bf8c-c8246c221179</title>
+  <link href="./dist/output.css" rel="stylesheet">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+        },
+        colors: {
+          brand: {
+            dark: '#0d1b4c',
+            text: '#1c1c1e',
+            muted: '#9aa0a6',
+            border: '#e2e4e8'
+          }
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+  <!-- Main Section: Full screen container with background image and bottom sheet -->
+<section id="section-main" class="relative min-h-screen w-full flex flex-col justify-end overflow-hidden bg-gray-900">
+  
+  <!-- Background Image -->
+  <img 
+    src="./assets//fb2ec6881c8e7cac3153b3a57d19c876a87ec705.png" 
+    alt="Offshore oil rig at dusk" 
+    class="absolute inset-0 w-full h-full object-cover z-0"
+  >
+
+  <!-- Bottom Sheet Container -->
+  <!-- Uses max-w-md and mx-auto to keep it readable on larger screens while acting as a bottom sheet on mobile -->
+  <div class="relative z-10 w-full max-w-md mx-auto bg-white rounded-t-[32px] px-6 pt-8 pb-10 shadow-2xl flex flex-col items-center">
+    
+    <!-- Header Text Group -->
+    <div class="w-full flex flex-col items-center mb-8">
+      <h1 class="text-[22px] font-bold text-brand-text mb-3">
+        Selamat Datang
+      </h1>
+      <p class="text-[14px] text-brand-muted text-center leading-relaxed px-2">
+        Akses akun Anda dengan aman atau daftar untuk mulai menggunakan layanan kami.
+      </p>
+    </div>
+
+    <!-- Action Buttons Group -->
+    <div class="w-full flex flex-col gap-3 mb-8">
+      <!-- Primary Login Button -->
+      <button class="w-full bg-brand-dark text-white font-semibold text-[15px] py-[16px] rounded-[14px] hover:bg-blue-900 transition-colors duration-200 flex justify-center items-center">
+        Masuk
+      </button>
+      
+      <!-- Secondary Register Button -->
+      <button class="w-full bg-white border border-brand-border text-brand-text font-semibold text-[15px] py-[16px] rounded-[14px] hover:bg-gray-50 transition-colors duration-200 flex justify-center items-center">
+        Daftar Akun Baru
+      </button>
+    </div>
+
+    <!-- Terms and Conditions Text -->
+    <p class="text-[11px] text-gray-400 text-center px-6 leading-relaxed">
+      Dengan melanjutkan, Anda menyetujui 
+      <a href="#" class="text-red-500 font-medium hover:underline">Syarat & Ketentuan</a> 
+      yang berlaku.
+    </p>
+
+  </div>
+</section>
+
+  <script>
+// No JavaScript code required here currently.
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "page-fac2643d-aa3f-4929-a050-1a7243b1c318",
+  "version": "1.0.0",
+  "description": "Generated Tailwind CSS project from PXCode",
+  "scripts": {
+    "start": "npm run build-css && npm run serve",
+    "build": "npm run build-css",
+    "build-css": "tailwindcss -i ./src/input.css -o ./dist/output.css",
+    "build-watch": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
+    "serve": "live-server --port=3000 --open=/"
+  },
+  "keywords": ["tailwind", "css", "pxcode"],
+  "dependencies": {},
+  "devDependencies": {
+    "tailwindcss": "^3.4.16",
+    "live-server": "^1.2.2"
+  }
+}
