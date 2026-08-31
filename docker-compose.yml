@@ -1,0 +1,15 @@
+services:
+  frontend:
+    build: .
+    # Port 80 sudah dipakai ampli-frontend (container frontend), jadi web-day
+    # di-expose di 8081. Akses: http://<ip-vps>:8081
+    ports:
+      - "8081:80"
+    container_name: web-day-frontend
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # Dipakai nginx template untuk proxy /api/. Sumber: .env (VITE_PROXY_TARGET)
+      # agar satu konfigurasi untuk dev & production.
+      - API_PROXY_TARGET=${VITE_PROXY_TARGET:-https://frontend.scagerwebsite.uk}

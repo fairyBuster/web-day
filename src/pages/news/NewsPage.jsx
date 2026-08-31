@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getErrorMessage } from '../../utils/api'
 import backIcon from '../../assets/5_282.svg'
 import ErrorModal from '../../components/ErrorModal'
+import ApiImage from '../../components/ApiImage'
 
 const SALT = 'KXXADFDFDF'
 
@@ -245,8 +246,8 @@ function NewsPage({ onBackClick, onArticleClick }) {
                     {/* Image Thumbnail */}
                     <div className="w-[84px] h-[64px] bg-imageBg border border-imageBorder rounded-lg shrink-0 overflow-hidden">
                       {item.image ? (
-                        <img
-                          src={`${API_BASE}${item.image}`}
+                        <ApiImage
+                          src={item.image}
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />

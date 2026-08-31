@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getErrorMessage } from '../../utils/api'
 import backIcon from '../../assets/10_783.svg'
 import ErrorModal from '../../components/ErrorModal'
+import ApiImage from '../../components/ApiImage'
 import SuccessModal from '../../components/SuccessModal'
 
 const SALT = 'KXXADFDFDF'
@@ -265,7 +266,7 @@ function ProdukDetailPage({ productId, onBackClick }) {
         <div className="bg-white rounded-[14px] p-5 shadow-[0_2px_10px_rgba(0,0,0,0.05)] relative">
           {/* Product Image / Placeholder */}
           {product?.image ? (
-            <img
+            <ApiImage
               src={product.image}
               alt={product.name}
               className="absolute top-5 right-5 w-[92px] h-[76px] object-cover border border-imageBorder rounded-lg"

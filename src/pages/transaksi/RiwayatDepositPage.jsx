@@ -95,9 +95,15 @@ function RiwayatDepositPage({ onBackClick }) {
         : Array.isArray(data)
           ? data
           : []
-      setTransactions((prev) => (append ? [...prev, ...list] : list))
+      // Tampilkan hanya deposit yang statusnya COMPLETED/SUCCESS (selesai)
+      const completed = list.filter((t) =>
+        /^(COMPLETED|SUCCESS)$/i.test(
+          String(t.status ?? t.transaction_status ?? '').trim(),
+        ),
+      )
+      setTransactions((prev) => (append ? [...prev, ...completed] : completed))
       setPage(pageNum)
-      setHasMore(Boolean(data.next) && list.length > 0)
+      setHasMore(Boolean(data.next) && completed.length > 0)
     } catch (err) {
       setError(
         'Terjadi kesalahan koneksi. Tolong segarkan halamannya.',
@@ -143,7 +149,7 @@ function RiwayatDepositPage({ onBackClick }) {
 
       {/* History List Section */}
       <section className="bg-background min-h-screen pb-10">
-        <div className="max-w-md mx-auto bg-white flex flex-col pt-2 pb-4 shadow-sm">
+        <div className="max-w-md mx-auto bg-white flex flex-col pt-2 pb-4 shadow-sm min-h-screen">
           {loading ? (
             <p className="text-textLight text-sm text-center py-10">
               Memuat riwayat deposit...

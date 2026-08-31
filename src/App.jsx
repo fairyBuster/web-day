@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import LandingPage from './pages/LandingPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -6,6 +6,8 @@ import DashboardPage from './pages/DashboardPage'
 import NewsPage from './pages/news/NewsPage'
 import NewsDetailPage from './pages/news/NewsDetailPage'
 import DepositPage from './pages/deposit/DepositPage'
+import QrisPage from './pages/deposit/QrisPage'
+import VaPage from './pages/deposit/VaPage'
 import WithdrawPage from './pages/withdraw/WithdrawPage'
 import ChangePinPage from './pages/withdraw/ChangePinPage'
 import BankAccountPage from './pages/bankaccount/BankAccountPage'
@@ -59,7 +61,67 @@ function App() {
     }
     return isAuthenticated() ? 'dashboard' : 'landing'
   })
+
+  // ==== History browser: back pindah halaman dalam aplikasi, bukan keluar web ====
+  // Routing memakai state (bukan URL), jadi tiap pindah halaman harus dicatat
+  // ke history browser agar tombol back punya tujuan.
+  const firstRenderRef = useRef(true)
+  const skipPushRef = useRef(false)
+
+  // Entry pertama diberi state halaman — back dari mana pun punya tujuan
+  useEffect(() => {
+    window.history.replaceState({ page }, '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Navigasi eksplisit — replace dipakai untuk login/logout/sesi berakhir
+  const navigate = (next, opts = {}) => {
+    if (opts.replace) {
+      window.history.replaceState({ page: next }, '')
+    } else {
+      window.history.pushState({ page: next }, '')
+      skipPushRef.current = true
+    }
+    setPage(next)
+  }
+
+  // Setiap setPage (pindah halaman) → catat ke history browser
+  useEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false
+      return
+    }
+    if (skipPushRef.current) {
+      skipPushRef.current = false
+      return
+    }
+    window.history.pushState({ page }, '')
+  }, [page])
+
+  // Tombol back browser → kembali ke halaman sebelumnya di dalam aplikasi
+  useEffect(() => {
+    const onPopState = (event) => {
+      const next = event.state?.page
+      if (!next) return // entry awal / state popup — biarkan
+      let target = next
+      if (target === 'login' && isAuthenticated()) target = 'dashboard'
+      if (PUBLIC_PAGES.includes(target) || isAuthenticated()) {
+        skipPushRef.current = true
+        setPage(target)
+        return
+      }
+      // Halaman privat tanpa login — buang entry, arahkan ke landing
+      window.history.replaceState({ page: 'landing' }, '')
+      skipPushRef.current = true
+      setPage('landing')
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   const [termsOrigin, setTermsOrigin] = useState('landing')
+  const [qrisPayment, setQrisPayment] = useState(null)
+  const [vaPayment, setVaPayment] = useState(null)
   const [inviteOrigin, setInviteOrigin] = useState('dashboard')
   const [selectedProductId, setSelectedProductId] = useState(() => {
     const saved = localStorage.getItem('app_product_id')
@@ -80,7 +142,7 @@ function App() {
     const match = window.location.hash.match(/^#\/invite\/([A-Za-z0-9_-]+)/)
     if (match?.[1]) {
       setInviteReferralCode(match[1])
-      if (!isAuthenticated()) setPage('register')
+      if (!isAuthenticated()) navigate('register', { replace: true })
     }
   }, [])
 
@@ -114,7 +176,7 @@ function App() {
       setSessionExpiredMessage(
         'Sesi kamu sudah berakhir. Silakan login kembali.',
       )
-      setPage('login')
+      navigate('login', { replace: true })
     }
 
     const scheduleCheck = () => {
@@ -156,7 +218,7 @@ function App() {
   const handleLogout = () => {
     clearSession()
     setSessionExpiredMessage('')
-    setPage('landing')
+    navigate('landing', { replace: true })
   }
 
   // Auth guard: halaman selain public wajib login — tanpa token diarahkan ke login
@@ -168,7 +230,7 @@ function App() {
         onForgotPasswordClick={() => setPage('forgot')}
         onLoginClick={() => {
           setSessionExpiredMessage('')
-          setPage('dashboard')
+          navigate('dashboard', { replace: true })
         }}
       />
     )
@@ -182,7 +244,7 @@ function App() {
         onForgotPasswordClick={() => setPage('forgot')}
         onLoginClick={() => {
           setSessionExpiredMessage('')
-          setPage('dashboard')
+          navigate('dashboard', { replace: true })
         }}
       />
     )
@@ -383,7 +445,41 @@ function App() {
   }
 
   if (page === 'deposit') {
-    return <DepositPage onBackClick={() => setPage('dashboard')} />
+    return (
+      <DepositPage
+        onBackClick={() => setPage('dashboard')}
+        onPayWithQris={(data) => {
+          setQrisPayment(data)
+          setPage('qris')
+        }}
+        onPayWithVa={(data) => {
+          setVaPayment(data)
+          setPage('va')
+        }}
+      />
+    )
+  }
+
+  if (page === 'qris') {
+    return (
+      <QrisPage
+        payment={qrisPayment}
+        onBackClick={() => setPage('deposit')}
+        onCheckStatus={() => setPage('riwayat-deposit')}
+        onBackHome={() => setPage('dashboard')}
+      />
+    )
+  }
+
+  if (page === 'va') {
+    return (
+      <VaPage
+        payment={vaPayment}
+        onBackClick={() => setPage('deposit')}
+        onCheckStatus={() => setPage('riwayat-deposit')}
+        onBackHome={() => setPage('dashboard')}
+      />
+    )
   }
 
   if (page === 'withdraw') {

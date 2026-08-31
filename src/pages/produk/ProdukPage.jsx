@@ -11,6 +11,7 @@ import timIcon from '../../assets/9_764.svg'
 import akuIcon from '../../assets/9_772.svg'
 import BottomNav from '../../components/BottomNav'
 import ErrorModal from '../../components/ErrorModal'
+import ApiImage from '../../components/ApiImage'
 
 const navIcons = {
   home: rumahIcon,
@@ -330,7 +331,7 @@ function ProdukPage({
 
               <div className="flex gap-3.5 mb-4">
                 {product.image ? (
-                  <img
+                  <ApiImage
                     src={product.image}
                     alt={product.name}
                     className="w-24 h-24 object-cover border border-imageBorder rounded-lg shrink-0"

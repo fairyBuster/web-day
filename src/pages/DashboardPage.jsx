@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ApiImage from '../components/ApiImage'
 import { getErrorMessage } from '../utils/api'
 import ErrorModal from '../components/ErrorModal'
 import logoImg from '../assets/6599a1a542c3a2fd08343a2ebac01e9ee2c2e144.png'
@@ -95,7 +96,32 @@ function DashboardPage({
   const [error, setError] = useState('')
   const [bannerIndex, setBannerIndex] = useState(0)
   // Popup utama muncul setiap kali menu home diakses
-  const [showPopup, setShowPopup] = useState(true)
+  // Popup cukup sekali per sesi browser — kalau muncul tiap kali
+  // kembali ke dashboard, entry history menumpuk & back terasa keluar web
+  const [showPopup, setShowPopup] = useState(() => {
+    if (sessionStorage.getItem('community_popup_seen')) return false
+    sessionStorage.setItem('community_popup_seen', '1')
+    return true
+  })
+
+  // Back browser/HP menutup popup, bukan keluar website
+  useEffect(() => {
+    if (!showPopup) return undefined
+    const handlePopState = () => setShowPopup(false)
+    // Hindari entry ganda kalau state popup sudah ada di puncak history
+    if (window.history.state?.dashboardPopup) {
+      window.addEventListener('popstate', handlePopState)
+      return () => window.removeEventListener('popstate', handlePopState)
+    }
+    window.history.pushState({ dashboardPopup: true }, '')
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [showPopup])
+
+  const closePopup = () => {
+    setShowPopup(false)
+    if (window.history.state?.dashboardPopup) window.history.back()
+  }
   const [communityLinks, setCommunityLinks] = useState({
     whatsapp: '',
     community: '',
@@ -350,8 +376,8 @@ function DashboardPage({
                 </div>
                 <div className="w-[92px] h-[68px] bg-imageBg border border-imageBorder rounded-lg flex-shrink-0 overflow-hidden">
                   {item.image ? (
-                    <img
-                      src={`${API_BASE}${item.image}`}
+                    <ApiImage
+                      src={item.image}
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
@@ -388,12 +414,18 @@ function DashboardPage({
 
       {/* Popup Utama: bergabung ke komunitas & grup WhatsApp */}
       {showPopup ? (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="w-[312px] bg-gradient-to-b from-[#16255e] via-[#0d1b4c] to-[#2a3d8f] rounded-[24px] pt-7 pb-6 px-[22px] flex flex-col items-center relative shadow-2xl">
+        <div
+          onClick={closePopup}
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-[312px] bg-gradient-to-b from-[#16255e] via-[#0d1b4c] to-[#2a3d8f] rounded-[24px] pt-7 pb-6 px-[22px] flex flex-col items-center relative shadow-2xl"
+          >
             {/* Close Button */}
             <button
               type="button"
-              onClick={() => setShowPopup(false)}
+              onClick={closePopup}
               className="absolute top-4 right-4 w-7 h-7 bg-white/15 rounded-full flex items-center justify-center hover:bg-white/25 transition-colors"
               aria-label="Tutup"
             >
@@ -504,7 +536,7 @@ function DashboardPage({
             {/* Footer Link */}
             <button
               type="button"
-              onClick={() => setShowPopup(false)}
+              onClick={closePopup}
               className="text-[#b7c0dd] text-[12px] font-medium hover:text-white transition-colors"
             >
               Lanjut ke Beranda

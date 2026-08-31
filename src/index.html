@@ -3,114 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>page-498945ce-e985-46d9-86c0-9536161130f6</title>
+  <title>page-26000ab5-98cf-46e6-8c27-b4195ee457f2</title>
   <link href="./dist/output.css" rel="stylesheet">
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['Inter', 'sans-serif'],
-        },
-        colors: {
-          brand: {
-            dark: '#1c1c1e',
-            gray: '#9aa0a6',
-            lightGray: '#b7c0dd',
-            green: '#25d366',
-            blue: '#0d1b4c',
-            yellow: '#ffd88a',
-            bg: '#818181'
-          }
-        }
-      }
-    }
-  }
-</script>
 </head>
 <body>
-  <!-- Main Overlay Background -->
-<section id="section-popup" class="min-h-screen bg-brand-bg flex items-center justify-center p-4 font-sans antialiased">
-  
-  <!-- Modal Container -->
-  <div class="w-[312px] bg-gradient-to-b from-[#16255e] via-[#0d1b4c] to-[#2a3d8f] rounded-[24px] pt-7 pb-6 px-[22px] flex flex-col items-center relative shadow-2xl">
-    
-    <!-- Close Button -->
-    <button class="absolute top-4 right-4 w-7 h-7 bg-white/15 rounded-full flex items-center justify-center hover:bg-white/25 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50">
-      <img src="./assets//33_822.svg" alt="Close" class="w-3.5 h-3.5">
+  <!-- Header Section: Dark blue background with back button and title -->
+<section id="section-header" class="bg-[#0d1b4c] max-w-md mx-auto font-sans sm:mt-8 sm:rounded-t-2xl overflow-hidden">
+  <div class="flex items-center px-4 py-4">
+    <button class="p-1 hover:bg-white/10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-white/50">
+      <img src="./assets//112_275.svg" alt="Back" class="w-4 h-4">
     </button>
-
-    <!-- Success Icon -->
-    <div class="w-[60px] h-[60px] bg-[#e0f3e1] rounded-full flex items-center justify-center shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] mb-4">
-      <img src="./assets//33_825.svg" alt="Success" class="w-[30px] h-[30px]">
-    </div>
-
-    <!-- Header Text -->
-    <div class="flex flex-col items-center text-center mb-5 w-full">
-      <h2 class="text-white font-bold text-[17px] leading-snug mb-1.5">
-        Akses Berhasil!<br>
-        Bergabung di <span class="text-brand-yellow">komunitas</span> kami
-      </h2>
-      <p class="text-brand-lightGray text-[11px]">
-        Dapatkan info promo dan update terbaru
-      </p>
-    </div>
-
-    <!-- Action Cards Container -->
-    <div class="w-full flex flex-col gap-3 mb-5">
-      
-      <!-- WhatsApp Card -->
-      <button class="w-full bg-white rounded-2xl py-3.5 px-4 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-brand-green">
-        <!-- Icon Group -->
-        <div class="relative w-[46px] h-[46px] shrink-0">
-          <div class="w-full h-full bg-brand-green rounded-full flex items-center justify-center">
-            <img src="./assets//33_841.svg" alt="WhatsApp" class="w-[22px] h-[22px]">
-          </div>
-          <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-brand-yellow border-2 border-white rounded-full flex items-center justify-center">
-            <img src="./assets//33_844.svg" alt="Badge" class="w-2.5 h-2.5">
-          </div>
-        </div>
-        <!-- Text Content -->
-        <div class="flex flex-col flex-grow">
-          <span class="text-brand-dark font-bold text-[13px] mb-0.5">Grup WhatsApp</span>
-          <span class="text-brand-gray text-[10px]">Info promo & update tercepat</span>
-        </div>
-        <!-- Chevron -->
-        <img src="./assets//33_851.svg" alt="Arrow Right" class="w-4 h-4 shrink-0">
-      </button>
-
-      <!-- Community Card -->
-      <button class="w-full bg-white rounded-2xl py-3.5 px-4 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-brand-blue">
-        <!-- Icon Group -->
-        <div class="relative w-[46px] h-[46px] shrink-0">
-          <div class="w-full h-full bg-brand-blue rounded-full flex items-center justify-center">
-            <img src="./assets//33_855.svg" alt="Community" class="w-[22px] h-[22px]">
-          </div>
-          <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-brand-yellow border-2 border-white rounded-full flex items-center justify-center">
-            <img src="./assets//33_861.svg" alt="Badge" class="w-2.5 h-2.5">
-          </div>
-        </div>
-        <!-- Text Content -->
-        <div class="flex flex-col flex-grow">
-          <span class="text-brand-dark font-bold text-[13px] mb-0.5">Komunitas Anggota</span>
-          <span class="text-brand-gray text-[10px] leading-tight">Diskusi dan berbagi<br>pengalaman</span>
-        </div>
-        <!-- Chevron -->
-        <img src="./assets//33_868.svg" alt="Arrow Right" class="w-4 h-4 shrink-0">
-      </button>
-
-    </div>
-
-    <!-- Footer Link -->
-    <button class="text-brand-lightGray text-[12px] font-medium hover:text-white transition-colors focus:outline-none focus:underline">
-      Lanjut ke Beranda
-    </button>
-
+    <h1 class="flex-1 text-center text-white font-medium text-sm pr-6">Pembayaran Virtual Account</h1>
   </div>
+</section>
+  <!-- Timer Section: Slightly lighter blue background with countdown -->
+<section id="section-timer" class="bg-[#16255e] max-w-md mx-auto font-sans sm:border-x sm:border-[#16255e]">
+  <div class="flex flex-col items-center py-3 gap-1">
+    <p class="text-[#b7c0dd] text-xs">Selesaikan pembayaran dalam</p>
+    <p class="text-[#ffd88a] font-bold text-lg tracking-wide">23:41:07</p>
+  </div>
+</section>
+  <!-- Payment Info Section: White background, total amount, bank details, and VA number -->
+<section id="section-payment-info" class="bg-white max-w-md mx-auto px-5 py-6 flex flex-col items-center font-sans sm:border-x sm:border-gray-200">
+  <p class="text-[#9aa0a6] text-sm mb-1">Total Pembayaran</p>
+  <h2 class="text-[#1c1c1e] text-3xl font-bold mb-6">Rp350.000</h2>
+  
+  <!-- Bank Details Card -->
+  <div class="w-full bg-[#f7f8fa] rounded-[14px] p-4 flex items-center gap-4 mb-6">
+    <div class="w-11 h-11 flex-shrink-0">
+      <img src="./assets//15965d49d1aa499eb5005dff1c601b5296bd37c8.png" alt="BRI Logo" class="w-full h-full object-contain">
+    </div>
+    <div class="flex flex-col">
+      <p class="text-[#1c1c1e] font-semibold text-sm">Bank Rakyat Indonesia (BRI)</p>
+      <p class="text-[#9aa0a6] text-xs mt-0.5">Virtual Account</p>
+    </div>
+  </div>
+
+  <!-- VA Number Box -->
+  <div class="w-full flex flex-col">
+    <p class="text-[#9aa0a6] text-sm mb-2">Nomor Virtual Account</p>
+    <div class="border border-[#c7cbd1] rounded-xl p-3.5 flex justify-between items-center">
+      <p class="text-[#0d1b4c] font-bold text-lg tracking-wider">8808 1234 5678 90</p>
+      <button class="bg-[#0d1b4c] hover:bg-[#16255e] transition-colors text-white text-xs px-4 py-2 rounded-[10px] font-medium focus:outline-none focus:ring-2 focus:ring-[#0d1b4c] focus:ring-offset-1">Salin</button>
+    </div>
+  </div>
+</section>
+  <!-- Instructions Section: Tabs and numbered list for payment steps -->
+<section id="section-instructions" class="bg-[#eceef1] max-w-md mx-auto pt-3.5 font-sans sm:border-x sm:border-gray-200">
+  <div class="bg-white px-5 py-6">
+    <h3 class="text-[#1c1c1e] font-bold mb-4">Cara Pembayaran</h3>
+    
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-6 overflow-x-auto pb-1">
+      <button class="bg-[#0d1b4c] text-white px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap focus:outline-none">M-Banking</button>
+      <button class="bg-[#f2f3f5] hover:bg-gray-200 transition-colors text-[#4a4d52] px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap focus:outline-none">ATM</button>
+      <button class="bg-[#f2f3f5] hover:bg-gray-200 transition-colors text-[#4a4d52] px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap focus:outline-none">Internet Banking</button>
+    </div>
+
+    <!-- Steps List -->
+    <div class="flex flex-col gap-4">
+      <div class="flex gap-3 items-start">
+        <div class="bg-[#dbe9fb] text-[#0d1b4c] w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
+        <p class="text-[#4a4d52] text-sm leading-relaxed">Buka aplikasi BCA mobile, lalu pilih menu m-Transfer.</p>
+      </div>
+      <div class="flex gap-3 items-start">
+        <div class="bg-[#dbe9fb] text-[#0d1b4c] w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
+        <p class="text-[#4a4d52] text-sm leading-relaxed">Pilih Virtual Account, lalu masukkan nomor Virtual Account di atas.</p>
+      </div>
+      <div class="flex gap-3 items-start">
+        <div class="bg-[#dbe9fb] text-[#0d1b4c] w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
+        <p class="text-[#4a4d52] text-sm leading-relaxed">Periksa nama & nominal tagihan, lalu masukkan PIN untuk konfirmasi.</p>
+      </div>
+      <div class="flex gap-3 items-start">
+        <div class="bg-[#dbe9fb] text-[#0d1b4c] w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</div>
+        <p class="text-[#4a4d52] text-sm leading-relaxed">Saldo akan otomatis masuk setelah pembayaran berhasil diverifikasi.</p>
+      </div>
+    </div>
+  </div>
+</section>
+  <!-- Actions Section: Bottom buttons for checking status or canceling -->
+<section id="section-actions" class="bg-[#eceef1] max-w-md mx-auto px-5 py-8 flex flex-col items-center gap-5 min-h-[200px] font-sans sm:border-x sm:border-b sm:border-gray-200 sm:rounded-b-2xl sm:mb-8">
+  <button class="w-full bg-[#0d1b4c] hover:bg-[#16255e] transition-colors text-white py-3.5 rounded-full font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-[#0d1b4c] focus:ring-offset-2 focus:ring-offset-[#eceef1]">Cek Status Pembayaran</button>
+  <button class="text-[#d6392c] hover:text-red-700 transition-colors text-sm font-medium focus:outline-none">Batalkan Pembayaran</button>
 </section>
 
   <script>

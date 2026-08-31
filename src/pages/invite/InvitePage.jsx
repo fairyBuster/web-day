@@ -201,8 +201,34 @@ function InvitePage({ onBackClick, onViewBonusHistory }) {
     loadReferral()
   }, [])
 
+  // Ambil frontend_url dari settings publik (domain link undangan)
+  const [frontendUrl, setFrontendUrl] = useState('')
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/settings/`, {
+          headers: { 'Content-Type': 'application/json' },
+        })
+        if (!res.ok) return
+        let json
+        try {
+          json = await res.json()
+        } catch (parseErr) {
+          return
+        }
+        const data = parseResponse(json)
+        if (data?.frontend_url) setFrontendUrl(data.frontend_url)
+      } catch (err) {
+        // Abaikan — pakai fallback domain default
+      }
+    }
+    loadSettings()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const code = referralCode
-  const inviteLink = `https://frontend.scagerwebsite.uk/#/invite/${code}`
+  const inviteLink = `${(frontendUrl || 'https://petroilandgas.com').replace(/\/$/, '')}/#/invite/${code}`
   const waShareUrl = code
     ? `https://wa.me/?text=${encodeURIComponent(
         `Ayo gabung dan dapatkan bonus! Gunakan kode referral saya: ${code} — ${inviteLink}`,

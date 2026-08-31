@@ -4,6 +4,7 @@ import backIcon from '../../assets/13_1073.svg'
 import searchIcon from '../../assets/13_1089.svg'
 import filterIcon from '../../assets/13_1096.svg'
 import ErrorModal from '../../components/ErrorModal'
+import ApiImage from '../../components/ApiImage'
 
 const SALT = 'KXXADFDFDF'
 
@@ -29,6 +30,24 @@ const parseResponse = (json) => {
 const tabs = ['Semua', 'Aktif', 'Selesai']
 
 // Format angka ke format Indonesia dengan prefix Rp (contoh: Rp2.850.000)
+// product_image bisa berupa URL lengkap atau path relatif
+const imageUrl = (path) => {
+  if (!path) return ''
+  return /^https?:\/\//i.test(path) ? path : `${API_BASE}${path}`
+}
+
+// Gambar produk: dari transaksi, atau join dari daftar produk (by id / by name)
+const productImageOf = (item, images) => {
+  if (item.product_image || item.image) return item.product_image || item.image
+  if (item.product_id != null && images.byId?.[item.product_id]) {
+    return images.byId[item.product_id]
+  }
+  if (item.product_name && images.byName?.[item.product_name]) {
+    return images.byName[item.product_name]
+  }
+  return ''
+}
+
 const formatPrice = (value) => {
   const num = Number(value)
   if (Number.isNaN(num)) return `Rp${String(value)}`
@@ -105,6 +124,39 @@ function RiwayatPembelianPage({ onBackClick, onDetailClick }) {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
+  const [productImages, setProductImages] = useState({ byId: {}, byName: {} })
+
+  // Ambil daftar produk sebagai sumber gambar (transaksi tidak menyimpan gambar)
+  useEffect(() => {
+    let active = true
+    const token = localStorage.getItem('access_token')
+    fetch(`${API_BASE}/api/products/`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!active || !json) return
+        const data = parseResponse(json)
+        const list = Array.isArray(data.results) ? data.results : []
+        const byId = {}
+        const byName = {}
+        for (const prod of list) {
+          const img = prod.image || prod.product_image || ''
+          if (!img) continue
+          if (prod.id != null) byId[prod.id] = img
+          const name = prod.name || prod.product_name
+          if (name) byName[name] = img
+        }
+        setProductImages({ byId, byName })
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
 
   const loadTransactions = async (pageNum, append = false) => {
     if (!append) setLoading(true)
@@ -347,7 +399,15 @@ function RiwayatPembelianPage({ onBackClick, onDetailClick }) {
                     {/* Card Header */}
                     <div className="flex justify-between items-start">
                       <div className="flex gap-3">
-                        <div className="w-[50px] h-[50px] bg-imageBg border border-imageBorder rounded-lg shrink-0"></div>
+                        <div className="w-[50px] h-[50px] bg-imageBg border border-imageBorder rounded-lg shrink-0 overflow-hidden">
+                          {productImageOf(item, productImages) ? (
+                            <ApiImage
+                              src={imageUrl(productImageOf(item, productImages))}
+                              alt={item.product_name || 'Produk'}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : null}
+                        </div>
                         <div className="flex flex-col justify-center gap-0.5">
                           <h3 className="text-textDark text-sm font-bold">
                             {item.product_name || 'Produk'}

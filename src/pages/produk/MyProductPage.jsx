@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getErrorMessage } from '../../utils/api'
 import backIcon from '../../assets/13_965.svg'
 import ErrorModal from '../../components/ErrorModal'
+import ApiImage from '../../components/ApiImage'
 
 const SALT = 'KXXADFDFDF'
 
@@ -84,18 +85,19 @@ const statusBadge = (status) => {
   return { text: 'Dibatalkan', cls: 'bg-[#f2f3f5] text-textLight' }
 }
 
-// Hitung progress bar dari durasi dan sisa hari
+// Hitung progress bar sesuai API: hari ke-X = jumlah profit yang sudah
+// masuk (claims_count). Fallback: durasi - sisa hari.
 const progressInfo = (item) => {
   const duration = Number(item.duration_days)
-  const remaining = Number(item.remaining_days)
   if (!Number.isFinite(duration) || duration <= 0) {
     return { dayLabel: '-', totalLabel: '-', percent: 0 }
   }
-  const passed = Number.isFinite(remaining)
-    ? Math.max(0, Math.min(duration, duration - remaining))
-    : 0
+  const claims = Number(item.claims_count)
+  const passed = Number.isFinite(claims) && claims >= 0
+    ? Math.max(0, Math.min(duration, Math.round(claims)))
+    : Math.max(0, Math.min(duration, duration - Number(item.remaining_days)))
   return {
-    dayLabel: `Hari ke-${Math.round(passed)}`,
+    dayLabel: `Hari ke-${passed}`,
     totalLabel: `${duration} Hari`,
     percent: Math.min(100, (passed / duration) * 100),
   }
@@ -276,7 +278,7 @@ function MyProductPage({ onBackClick }) {
                   <div className="flex items-start gap-3">
                     <div className="w-14 h-14 bg-imageBg border border-imageBorder rounded-[10px] shrink-0 overflow-hidden">
                       {item.product_image ? (
-                        <img
+                        <ApiImage
                           src={imageUrl(item.product_image)}
                           alt={item.product_name}
                           className="w-full h-full object-cover"
@@ -347,14 +349,20 @@ function MyProductPage({ onBackClick }) {
                   {/* Countdown */}
                   <div className="bg-background rounded-full py-2.5 flex justify-center items-center gap-2 mt-1">
                     {isActive(item.status) ? (
-                      <>
-                        <span className="text-[#6a6d72] text-[11px]">
-                          Keuntungan berikutnya dalam
+                      item.can_claim_today ? (
+                        <span className="text-[#2fb380] font-bold text-[11px]">
+                          Profit siap diklaim sekarang!
                         </span>
-                        <span className="text-primary font-bold text-[11px]">
-                          {countdown}
-                        </span>
-                      </>
+                      ) : (
+                        <>
+                          <span className="text-[#6a6d72] text-[11px]">
+                            Keuntungan berikutnya dalam
+                          </span>
+                          <span className="text-primary font-bold text-[11px]">
+                            {countdown}
+                          </span>
+                        </>
+                      )
                     ) : (
                       <span className="text-[#6a6d72] text-[11px]">
                         Proyek telah selesai
