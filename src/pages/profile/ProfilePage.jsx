@@ -93,7 +93,7 @@ const menuGroups = [
     title: 'Akun',
     items: [
       { label: 'Profil saya', icon: profilIcon, arrow: arrowProfil, bg: 'bg-[#dbe9fb]', action: 'profil' },
-      { label: 'Ubah Kata Sandi Akun', icon: passwordIcon, arrow: arrowPassword, bg: 'bg-[#fbeed4]', action: 'ubah-kata-sandi-akun' },
+      { label: 'Ubah Kata Sandi Akun', icon: passwordIcon, arrow: arrowPassword, bg: 'bg-[#fbeed4]', action: 'change-password' },
       { label: 'Ubah Kata Sandi Transaksi', icon: txnIcon, arrow: arrowTxn, bg: 'bg-[#fbe0dd]', action: 'change-pin' },
       { label: 'Rekening Bank', icon: bankIcon, arrow: arrowBank, bg: 'bg-[#e0f3e1]', action: 'bank' },
     ],
@@ -108,9 +108,9 @@ const menuGroups = [
   {
     title: 'Lainnya',
     items: [
-      { label: 'Hubungi CS', icon: csIcon, arrow: arrowCs, bg: 'bg-[#dbe9fb]', action: 'hubungi-cs' },
+      { label: 'Hubungi CS', icon: csIcon, arrow: arrowCs, bg: 'bg-[#dbe9fb]', action: 'contact-support' },
       { label: 'Syarat & Ketentuan', icon: tncIcon, arrow: arrowTnc, bg: 'bg-[#e0f3e1]', action: 'terms' },
-      { label: 'Tentang Aplikasi', icon: aboutIcon, arrow: arrowAbout, bg: 'bg-[#fbeed4]', action: 'tentang-aplikasi' },
+      { label: 'Tentang Aplikasi', icon: aboutIcon, arrow: arrowAbout, bg: 'bg-[#fbeed4]', action: 'about-app' },
     ],
   },
 ]
@@ -133,9 +133,9 @@ function ProfilePage({
 }) {
   const handleAction = (action) => {
     if (action === 'profil') onProfilSayaClick?.()
-    if (action === 'ubah-kata-sandi-akun') onUbahKataSandiClick?.()
-    if (action === 'hubungi-cs') onHubungiCsClick?.()
-    if (action === 'tentang-aplikasi') onTentangAplikasiClick?.()
+    if (action === 'change-password') onUbahKataSandiClick?.()
+    if (action === 'contact-support') onHubungiCsClick?.()
+    if (action === 'about-app') onTentangAplikasiClick?.()
     if (action === 'deposit') onDepositClick?.()
     if (action === 'withdraw') onWithdrawClick?.()
     if (action === 'change-pin') onChangePinClick?.()

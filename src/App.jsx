@@ -41,18 +41,63 @@ import { getTokenExpiryMs, clearSession } from './utils/session'
 // Halaman yang boleh diakses tanpa login
 const PUBLIC_PAGES = ['landing', 'login', 'register', 'forgot', 'terms']
 
+// Semua nama halaman valid — dipakai memvalidasi hash URL (#/deposit)
+const ALL_PAGES = [
+  ...PUBLIC_PAGES,
+  'privacy', 'dashboard', 'news', 'news-detail', 'deposit', 'qris', 'va',
+  'withdraw', 'change-pin', 'bank-account', 'voucher', 'product', 'product-detail',
+  'my-product', 'purchase-history', 'profile', 'my-profile',
+  'change-password', 'contact-support', 'about-app', 'team', 'checkin',
+  'roulette', 'invite', 'mission', 'transaction-history', 'deposit-history',
+  'referral-history', 'product-purchase-history', 'withdrawal-history',
+  'profit-history', 'other-history',
+]
+
+// Baca nama halaman dari hash URL (#/pages/deposit → 'deposit');
+// null jika bukan halaman valid. Semua path diawali 'pages/'.
+const pageFromHash = (hash) => {
+  const m = String(hash || '').match(/^#\/pages\/([a-z0-9-]+)/)
+  if (!m) return null
+  return ALL_PAGES.includes(m[1]) ? m[1] : null
+}
+
+// Nama halaman lama (masih bahasa Indonesia) — migrasi otomatis dari localStorage
+const PAGE_MIGRATE = {
+  privasi: 'privacy',
+  produk: 'product',
+  'produk-detail': 'product-detail',
+  myproduct: 'my-product',
+  'riwayat-pembelian': 'purchase-history',
+  'profil-saya': 'my-profile',
+  'ubah-kata-sandi-akun': 'change-password',
+  'hubungi-cs': 'contact-support',
+  'tentang-aplikasi': 'about-app',
+  misi: 'mission',
+  'riwayat-transaksi': 'transaction-history',
+  'riwayat-deposit': 'deposit-history',
+  'riwayat-bonus-referral': 'referral-history',
+  'riwayat-beli-produk': 'product-purchase-history',
+  'riwayat-penarikan': 'withdrawal-history',
+  'riwayat-keuntungan': 'profit-history',
+  'riwayat-lainnya': 'other-history',
+  bankaccount: 'bank-account',
+}
+
 const isAuthenticated = () => Boolean(localStorage.getItem('access_token'))
 
 function App() {
   // Pulihkan halaman terakhir agar tidak balik ke landing saat refresh
   const [page, setPage] = useState(() => {
-    const saved = localStorage.getItem('app_page')
+    // URL hash (#/pages/deposit) lebih baru dari localStorage — pakai hash dulu.
+    // Nama halaman lama (bahasa Indonesia) dari localStorage dimigrasi otomatis.
+    let saved = pageFromHash(window.location.hash) || localStorage.getItem('app_page')
+    if (saved && !ALL_PAGES.includes(saved)) saved = PAGE_MIGRATE[saved] || null
     if (saved) {
       if (PUBLIC_PAGES.includes(saved)) return saved
       if (isAuthenticated()) {
         // Halaman detail butuh id tersimpan — tanpa id, balik ke daftarnya
-        if (saved === 'produk-detail' && !localStorage.getItem('app_product_id'))
-          return 'produk'
+        if (saved === 'product-detail' && !localStorage.getItem('app_product_id'))
+          return 'product'
         if (saved === 'news-detail' && !localStorage.getItem('app_news_id'))
           return 'news'
         return saved
@@ -68,18 +113,28 @@ function App() {
   const firstRenderRef = useRef(true)
   const skipPushRef = useRef(false)
 
-  // Entry pertama diberi state halaman — back dari mana pun punya tujuan
+  // Entry pertama diberi state halaman — back dari mana pun punya tujuan.
+  // Hash URL ikut disinkronkan supaya path tampil (#/pages/dashboard, dst).
+  // Hash link undangan (#/invite/{kode}) dibiarkan agar kode referral terbaca.
   useEffect(() => {
-    window.history.replaceState({ page }, '')
+    const cur = window.location.hash
+    const same = pageFromHash(cur) === page
+    const isInvite = cur.startsWith('#/invite/')
+    window.history.replaceState(
+      { page },
+      '',
+      same || isInvite ? undefined : `#/pages/${page}`,
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Navigasi eksplisit — replace dipakai untuk login/logout/sesi berakhir
   const navigate = (next, opts = {}) => {
+    const url = `#/pages/${next}`
     if (opts.replace) {
-      window.history.replaceState({ page: next }, '')
+      window.history.replaceState({ page: next }, '', url)
     } else {
-      window.history.pushState({ page: next }, '')
+      window.history.pushState({ page: next }, '', url)
       skipPushRef.current = true
     }
     setPage(next)
@@ -95,7 +150,7 @@ function App() {
       skipPushRef.current = false
       return
     }
-    window.history.pushState({ page }, '')
+    window.history.pushState({ page }, '', `#/pages/${page}`)
   }, [page])
 
   // Tombol back browser → kembali ke halaman sebelumnya di dalam aplikasi
@@ -111,12 +166,28 @@ function App() {
         return
       }
       // Halaman privat tanpa login — buang entry, arahkan ke landing
-      window.history.replaceState({ page: 'landing' }, '')
+      window.history.replaceState({ page: 'landing' }, '', '#/pages/landing')
       skipPushRef.current = true
       setPage('landing')
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  // Ketik/edit hash manual di address bar (#/pages/deposit) → langsung pindah halaman.
+  // Pakai updater agar tidak mendorong entry ganda saat popstate sudah duluan.
+  useEffect(() => {
+    const onHashChange = () => {
+      const target = pageFromHash(window.location.hash)
+      if (!target) return
+      setPage((prev) => {
+        if (prev === target) return prev
+        skipPushRef.current = true
+        return target
+      })
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   const [termsOrigin, setTermsOrigin] = useState('landing')
@@ -261,68 +332,68 @@ function App() {
         onDepositClick={() => setPage('deposit')}
         onWithdrawClick={() => setPage('withdraw')}
         onVoucherClick={() => setPage('voucher')}
-        onProyekClick={() => setPage('produk')}
+        onProyekClick={() => setPage('product')}
         onProfileClick={() => setPage('profile')}
         onTeamClick={() => setPage('team')}
         onCheckinClick={() => setPage('checkin')}
         onRouletteClick={() => setPage('roulette')}
         onInviteClick={() => openInvite('dashboard')}
-        onMisiClick={() => setPage('misi')}
+        onMisiClick={() => setPage('mission')}
         onBankAccountClick={() => {
           setBankAccountOrigin('dashboard')
-          setPage('bankaccount')
+          setPage('bank-account')
         }}
       />
     )
   }
 
-  if (page === 'misi') {
+  if (page === 'mission') {
     return <MisiPage onBackClick={() => setPage('dashboard')} />
   }
 
-  if (page === 'riwayat-transaksi') {
+  if (page === 'transaction-history') {
     return (
       <RiwayatTransaksiPage
         onBackClick={() => setPage('profile')}
-        onDepositClick={() => setPage('riwayat-deposit')}
-        onReferralClick={() => setPage('riwayat-bonus-referral')}
-        onBeliClick={() => setPage('riwayat-beli-produk')}
-        onPenarikanClick={() => setPage('riwayat-penarikan')}
-        onKeuntunganClick={() => setPage('riwayat-keuntungan')}
-        onLainnyaClick={() => setPage('riwayat-lainnya')}
+        onDepositClick={() => setPage('deposit-history')}
+        onReferralClick={() => setPage('referral-history')}
+        onBeliClick={() => setPage('product-purchase-history')}
+        onPenarikanClick={() => setPage('withdrawal-history')}
+        onKeuntunganClick={() => setPage('profit-history')}
+        onLainnyaClick={() => setPage('other-history')}
       />
     )
   }
 
-  if (page === 'riwayat-deposit') {
-    return <RiwayatDepositPage onBackClick={() => setPage('riwayat-transaksi')} />
+  if (page === 'deposit-history') {
+    return <RiwayatDepositPage onBackClick={() => setPage('transaction-history')} />
   }
 
-  if (page === 'riwayat-bonus-referral') {
-    return <RiwayatBonusReferralPage onBackClick={() => setPage('riwayat-transaksi')} />
+  if (page === 'referral-history') {
+    return <RiwayatBonusReferralPage onBackClick={() => setPage('transaction-history')} />
   }
 
-  if (page === 'riwayat-beli-produk') {
-    return <RiwayatBeliProdukPage onBackClick={() => setPage('riwayat-transaksi')} />
+  if (page === 'product-purchase-history') {
+    return <RiwayatBeliProdukPage onBackClick={() => setPage('transaction-history')} />
   }
 
-  if (page === 'riwayat-penarikan') {
-    return <RiwayatPenarikanPage onBackClick={() => setPage('riwayat-transaksi')} />
+  if (page === 'withdrawal-history') {
+    return <RiwayatPenarikanPage onBackClick={() => setPage('transaction-history')} />
   }
 
-  if (page === 'riwayat-keuntungan') {
-    return <RiwayatKeuntunganPage onBackClick={() => setPage('riwayat-transaksi')} />
+  if (page === 'profit-history') {
+    return <RiwayatKeuntunganPage onBackClick={() => setPage('transaction-history')} />
   }
 
-  if (page === 'riwayat-lainnya') {
-    return <RiwayatLainnyaPage onBackClick={() => setPage('riwayat-transaksi')} />
+  if (page === 'other-history') {
+    return <RiwayatLainnyaPage onBackClick={() => setPage('transaction-history')} />
   }
 
   if (page === 'invite') {
     return (
       <InvitePage
         onBackClick={() => setPage(inviteOrigin)}
-        onViewBonusHistory={() => setPage('riwayat-bonus-referral')}
+        onViewBonusHistory={() => setPage('referral-history')}
       />
     )
   }
@@ -340,50 +411,50 @@ function App() {
       <ProfilePage
         onNavigate={(tab) => {
           if (tab === 'home') setPage('dashboard')
-          if (tab === 'proyek') setPage('produk')
+          if (tab === 'proyek') setPage('product')
           if (tab === 'tim') setPage('team')
         }}
         onDepositClick={() => setPage('deposit')}
         onWithdrawClick={() => setPage('withdraw')}
         onChangePinClick={() => setPage('change-pin')}
-        onBankClick={() => setPage('bankaccount')}
+        onBankClick={() => setPage('bank-account')}
         onTermsClick={() => openTerms('profile')}
         onInviteClick={() => openInvite('profile')}
-        onRiwayatClick={() => setPage('riwayat-transaksi')}
-        onProfilSayaClick={() => setPage('profil-saya')}
-        onUbahKataSandiClick={() => setPage('ubah-kata-sandi-akun')}
-        onHubungiCsClick={() => setPage('hubungi-cs')}
-        onTentangAplikasiClick={() => setPage('tentang-aplikasi')}
-        onMisiClick={() => setPage('misi')}
+        onRiwayatClick={() => setPage('transaction-history')}
+        onProfilSayaClick={() => setPage('my-profile')}
+        onUbahKataSandiClick={() => setPage('change-password')}
+        onHubungiCsClick={() => setPage('contact-support')}
+        onTentangAplikasiClick={() => setPage('about-app')}
+        onMisiClick={() => setPage('mission')}
         onLogoutClick={handleLogout}
       />
     )
   }
 
-  if (page === 'profil-saya') {
+  if (page === 'my-profile') {
     return <ProfilSayaPage onBackClick={() => setPage('profile')} />
   }
 
-  if (page === 'ubah-kata-sandi-akun') {
+  if (page === 'change-password') {
     return <UbahKataSandiAkunPage onBackClick={() => setPage('profile')} />
   }
 
-  if (page === 'hubungi-cs') {
+  if (page === 'contact-support') {
     return <HubungiCsPage onBackClick={() => setPage('profile')} />
   }
 
-  if (page === 'tentang-aplikasi') {
+  if (page === 'about-app') {
     return (
       <TentangAplikasiPage
         onBackClick={() => setPage('profile')}
-        onTermsClick={() => openTerms('tentang-aplikasi')}
-        onPrivacyClick={() => setPage('privasi')}
+        onTermsClick={() => openTerms('about-app')}
+        onPrivacyClick={() => setPage('privacy')}
       />
     )
   }
 
-  if (page === 'privasi') {
-    return <PrivacyPage onBackClick={() => setPage('tentang-aplikasi')} />
+  if (page === 'privacy') {
+    return <PrivacyPage onBackClick={() => setPage('about-app')} />
   }
 
   if (page === 'team') {
@@ -391,15 +462,15 @@ function App() {
       <TeamPage
         onNavigate={(tab) => {
           if (tab === 'home') setPage('dashboard')
-          if (tab === 'proyek') setPage('produk')
+          if (tab === 'proyek') setPage('product')
           if (tab === 'aku') setPage('profile')
         }}
-        onViewBonusHistory={() => setPage('riwayat-bonus-referral')}
+        onViewBonusHistory={() => setPage('referral-history')}
       />
     )
   }
 
-  if (page === 'produk') {
+  if (page === 'product') {
     return (
       <ProdukPage
         onNavigate={(tab) => {
@@ -409,35 +480,35 @@ function App() {
         }}
         onBeliClick={(product) => {
           setSelectedProductId(product?.id ?? null)
-          setPage('produk-detail')
+          setPage('product-detail')
         }}
-        onRiwayatClick={() => setPage('riwayat-pembelian')}
-        onInviteClick={() => openInvite('produk')}
-        onMyProductClick={() => setPage('myproduct')}
+        onRiwayatClick={() => setPage('purchase-history')}
+        onInviteClick={() => openInvite('product')}
+        onMyProductClick={() => setPage('my-product')}
       />
     )
   }
 
-  if (page === 'produk-detail') {
+  if (page === 'product-detail') {
     return (
       <ProdukDetailPage
         productId={selectedProductId}
-        onBackClick={() => setPage('produk')}
+        onBackClick={() => setPage('product')}
       />
     )
   }
 
-  if (page === 'riwayat-pembelian') {
+  if (page === 'purchase-history') {
     return (
       <RiwayatPembelianPage
-        onBackClick={() => setPage('produk')}
-        onDetailClick={() => setPage('myproduct')}
+        onBackClick={() => setPage('product')}
+        onDetailClick={() => setPage('my-product')}
       />
     )
   }
 
-  if (page === 'myproduct') {
-    return <MyProductPage onBackClick={() => setPage('produk')} />
+  if (page === 'my-product') {
+    return <MyProductPage onBackClick={() => setPage('product')} />
   }
 
   if (page === 'voucher') {
@@ -465,7 +536,7 @@ function App() {
       <QrisPage
         payment={qrisPayment}
         onBackClick={() => setPage('deposit')}
-        onCheckStatus={() => setPage('riwayat-deposit')}
+        onCheckStatus={() => setPage('deposit-history')}
         onBackHome={() => setPage('dashboard')}
       />
     )
@@ -476,7 +547,7 @@ function App() {
       <VaPage
         payment={vaPayment}
         onBackClick={() => setPage('deposit')}
-        onCheckStatus={() => setPage('riwayat-deposit')}
+        onCheckStatus={() => setPage('deposit-history')}
         onBackHome={() => setPage('dashboard')}
       />
     )
@@ -488,7 +559,7 @@ function App() {
         onBackClick={() => setPage('dashboard')}
         onAddBankAccount={() => {
           setBankAccountOrigin('withdraw')
-          setPage('bankaccount')
+          setPage('bank-account')
         }}
         onEditPin={() => setPage('change-pin')}
       />
@@ -499,7 +570,7 @@ function App() {
     return <ChangePinPage onBackClick={() => setPage('withdraw')} />
   }
 
-  if (page === 'bankaccount') {
+  if (page === 'bank-account') {
     return (
       <BankAccountPage onBackClick={() => setPage(bankAccountOrigin)} />
     )
