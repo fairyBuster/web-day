@@ -17,7 +17,7 @@ const links = [
   { label: 'Syarat & Ketentuan', icon: tncIcon, arrow: tncArrow, bg: 'bg-[#e0f3e1]', action: 'terms' },
   { label: 'Kebijakan Privasi', icon: privacyIcon, arrow: privacyArrow, bg: 'bg-[#dbe9fb]', action: 'terms' },
   { label: 'Lisensi', icon: licenseIcon, arrow: licenseArrow, bg: 'bg-[#fbeed4]', action: 'lisensi' },
-  { label: 'Cek Pembaruan', icon: updateIcon, arrow: null, bg: 'bg-[#f3ddf0]', note: 'Versi terbaru' },
+  { label: 'Cek Pembaruan', icon: updateIcon, arrow: null, bg: 'bg-[#f3ddf0]', note: 'Versi terbaru', action: 'update' },
 ]
 
 const socials = [
@@ -32,6 +32,15 @@ function TentangAplikasiPage({ onBackClick, onTermsClick }) {
   const handleAction = (link) => {
     if (link.action === 'lisensi') setShowLisensi(true)
     else if (link.action === 'terms') onTermsClick?.()
+    else if (link.action === 'update') {
+      // Download APK dari folder public/android (disajikan nginx di /android/)
+      const a = document.createElement('a')
+      a.href = '/android/apps.apk'
+      a.download = 'petro-oil-gas.apk'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
   }
 
   return (

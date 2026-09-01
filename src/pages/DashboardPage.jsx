@@ -18,7 +18,6 @@ import voucherIcon from '../assets/6ba253d276542ecf28c5aa95b44179664a025928.png'
 import BottomNav from '../components/BottomNav'
 import popupCloseIcon from '../assets/33_822.svg'
 import popupSuccessIcon from '../assets/33_825.svg'
-import waIcon from '../assets/33_841.svg'
 import waBadgeIcon from '../assets/33_844.svg'
 import waArrowIcon from '../assets/33_851.svg'
 import communityIcon from '../assets/33_855.svg'
@@ -95,14 +94,9 @@ function DashboardPage({
   const [loadingNews, setLoadingNews] = useState(true)
   const [error, setError] = useState('')
   const [bannerIndex, setBannerIndex] = useState(0)
-  // Popup utama muncul setiap kali menu home diakses
-  // Popup cukup sekali per sesi browser — kalau muncul tiap kali
-  // kembali ke dashboard, entry history menumpuk & back terasa keluar web
-  const [showPopup, setShowPopup] = useState(() => {
-    if (sessionStorage.getItem('community_popup_seen')) return false
-    sessionStorage.setItem('community_popup_seen', '1')
-    return true
-  })
+  // Popup utama muncul setiap kali menu home diakses (termasuk refresh)
+  // Guard history.state mencegah entry menumpuk, jadi back hanya menutup popup
+  const [showPopup, setShowPopup] = useState(true)
 
   // Back browser/HP menutup popup, bukan keluar website
   useEffect(() => {
@@ -123,11 +117,11 @@ function DashboardPage({
     if (window.history.state?.dashboardPopup) window.history.back()
   }
   const [communityLinks, setCommunityLinks] = useState({
-    whatsapp: '',
+    telegram: '',
     community: '',
   })
 
-  // Link grup WhatsApp & komunitas dari API support links
+  // Link grup Telegram & komunitas dari API support links
   useEffect(() => {
     const loadLinks = async () => {
       try {
@@ -152,19 +146,19 @@ function DashboardPage({
           : Array.isArray(data)
             ? data
             : []
-        // Kartu WhatsApp → link platform 'whatsapp'; kartu komunitas → link lain
-        const wa = list.find(
+        // Kartu Telegram → link platform 'telegram'; kartu komunitas → link lain
+        const tg = list.find(
           (l) =>
-            String(l.platform || '').toLowerCase() === 'whatsapp' &&
+            String(l.platform || '').toLowerCase() === 'telegram' &&
             l.is_active !== false,
         )
         const community = list.find(
           (l) =>
-            String(l.platform || '').toLowerCase() !== 'whatsapp' &&
+            String(l.platform || '').toLowerCase() !== 'telegram' &&
             l.is_active !== false,
         )
         setCommunityLinks({
-          whatsapp: wa?.url || '',
+          telegram: tg?.url || '',
           community: community?.url || '',
         })
       } catch (err) {
@@ -412,7 +406,7 @@ function DashboardPage({
         onClose={() => setError('')}
       />
 
-      {/* Popup Utama: bergabung ke komunitas & grup WhatsApp */}
+      {/* Popup Utama: bergabung ke komunitas & grup Telegram */}
       {showPopup ? (
         <div
           onClick={closePopup}
@@ -456,17 +450,19 @@ function DashboardPage({
 
             {/* Action Cards */}
             <div className="w-full flex flex-col gap-3 mb-5">
-              {/* WhatsApp Card */}
+              {/* Telegram Card */}
               <a
-                href={communityLinks.whatsapp || '#'}
-                {...(communityLinks.whatsapp
+                href={communityLinks.telegram || '#'}
+                {...(communityLinks.telegram
                   ? { target: '_blank', rel: 'noopener noreferrer' }
                   : {})}
                 className="w-full bg-white rounded-2xl py-3.5 px-4 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
               >
                 <div className="relative w-[46px] h-[46px] shrink-0">
-                  <div className="w-full h-full bg-[#25d366] rounded-full flex items-center justify-center">
-                    <img src={waIcon} alt="WhatsApp" className="w-[22px] h-[22px]" />
+                  <div className="w-full h-full bg-[#229ED9] rounded-full flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="w-[22px] h-[22px]" fill="white" aria-hidden="true">
+                      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                    </svg>
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-[#ffd88a] border-2 border-white rounded-full flex items-center justify-center">
                     <img
@@ -478,7 +474,7 @@ function DashboardPage({
                 </div>
                 <div className="flex flex-col flex-grow">
                   <span className="text-[#1c1c1e] font-bold text-[13px] mb-0.5">
-                    Grup WhatsApp
+                    Grup Telegram
                   </span>
                   <span className="text-[#9aa0a6] text-[10px]">
                     Info promo & update tercepat
