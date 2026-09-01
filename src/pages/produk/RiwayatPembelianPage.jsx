@@ -118,6 +118,9 @@ function RiwayatPembelianPage({ onBackClick, onDetailClick }) {
   const [activeTab, setActiveTab] = useState('Semua')
   const [search, setSearch] = useState('')
   const [transactions, setTransactions] = useState([])
+  // Total Bunga Didapat = profit yang SUDAH diterima (total_claimed_profit),
+  // dijumlahkan dari /api/investments/ — sumber data yang sama dengan MyProduct
+  const [totalInterest, setTotalInterest] = useState(0)
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
@@ -211,6 +214,55 @@ function RiwayatPembelianPage({ onBackClick, onDetailClick }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Total bunga dihitung dari semua halaman investasi (bukan hanya yang tampil)
+  useEffect(() => {
+    let active = true
+    const loadAllInvestments = async () => {
+      try {
+        const token = localStorage.getItem('access_token')
+        let pageNum = 1
+        let sum = 0
+        for (;;) {
+          const res = await fetch(
+            `${API_BASE}/api/investments/?page=${pageNum}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            },
+          )
+          let json
+          try {
+            json = await res.json()
+          } catch (parseErr) {
+            return
+          }
+          const data = parseResponse(json)
+          if (!res.ok) return
+          const list = Array.isArray(data.results)
+            ? data.results
+            : Array.isArray(data)
+              ? data
+              : []
+          sum += list.reduce(
+            (acc, item) => acc + (Number(item.total_claimed_profit) || 0),
+            0,
+          )
+          if (!data.next || list.length === 0) break
+          pageNum += 1
+        }
+        if (active) setTotalInterest(sum)
+      } catch (err) {
+        // Gagal memuat — biarkan total tetap 0
+      }
+    }
+    loadAllInvestments()
+    return () => {
+      active = false
+    }
+  }, [])
+
   const handleLoadMore = async () => {
     if (loadingMore) return
     setLoadingMore(true)
@@ -273,7 +325,7 @@ function RiwayatPembelianPage({ onBackClick, onDetailClick }) {
   const stats = [
     { label: 'Total Transaksi', value: String(count) },
     { label: 'Total Proyek', value: formatPrice(totalAmount) },
-    { label: 'Total Bunga Didapat', value: formatPrice(0) },
+    { label: 'Total Bunga Didapat', value: formatPrice(totalInterest) },
   ]
 
   return (

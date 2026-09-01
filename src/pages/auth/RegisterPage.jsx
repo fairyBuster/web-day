@@ -72,8 +72,14 @@ function RegisterPage({ onLoginClick, onTermsClick, initialReferralCode }) {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [password2, setPassword2] = useState('')
-  // Kode referral: bisa datang dari link undangan (#/invite/{kode}) lewat prop
+  // Kode referral: bisa datang dari link undangan (#/invite/{kode}) lewat prop.
+  // Efek invite di App bisa jalan SETELAH halaman ini ter-mount (saat halaman
+  // awal sudah 'register' dari localStorage) — sinkronkan saat prop berubah.
   const [referralCode, setReferralCode] = useState(initialReferralCode || '')
+
+  useEffect(() => {
+    if (initialReferralCode) setReferralCode(initialReferralCode)
+  }, [initialReferralCode])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
