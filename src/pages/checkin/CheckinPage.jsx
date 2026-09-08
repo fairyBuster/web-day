@@ -31,6 +31,7 @@ const parseResponse = (json) => {
 
 const checkIcons = [check1Icon, check2Icon, check3Icon, check4Icon]
 
+// Fallback kalau API setting gagal/loading — isi sementara biar grid tidak kosong.
 const DAY_REWARDS = [
   { label: 'Hari 1', reward: 'Rp1.000' },
   { label: 'Hari 2', reward: 'Rp1.000' },
@@ -42,8 +43,36 @@ const DAY_REWARDS = [
   { label: 'Bonus', reward: 'Rp10.000' },
 ]
 
+// Susun reward harian dari /api/attendance/settings/active/:
+// - daily_rewards: {"1": 1000.0, ...} nominal tiap hari, panjang = daily_cycle_days
+// - consecutive_bonus_enabled: true → tambah sel Bonus sebesar bonus_7_days
+const buildRewardsFromSettings = (settings) => {
+  const cycle = Math.max(1, Number(settings?.daily_cycle_days) || 7)
+  const daily = settings?.daily_rewards
+  const fmt = (value) => {
+    const n = Number(value) || 0
+    return `Rp${n.toLocaleString('id-ID')}`
+  }
+  const hasDaily = daily && typeof daily === 'object' && Object.keys(daily).length > 0
+  const list = []
+  for (let i = 1; i <= cycle; i += 1) {
+    const value = hasDaily
+      ? daily[i] ?? daily[String(i)] ?? 0
+      : Number(settings?.fixed_amount) || 0
+    list.push({ label: `Hari ${i}`, reward: fmt(value) })
+  }
+  if (
+    settings?.consecutive_bonus_enabled &&
+    Number(settings?.bonus_7_days) > 0
+  ) {
+    list.push({ label: 'Bonus', reward: fmt(settings.bonus_7_days) })
+  }
+  return list
+}
+
 function CheckinPage({ onBackClick }) {
   const [streakData, setStreakData] = useState(null)
+  const [attendanceSettings, setAttendanceSettings] = useState(null)
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(false)
   const [error, setError] = useState('')
@@ -84,8 +113,33 @@ function CheckinPage({ onBackClick }) {
     }
   }
 
+  // Setting reward (daily_rewards, cycle, bonus) — gagal diam saja, grid
+  // tetap pakai fallback DAY_REWARDS
+  const loadSettings = async () => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const res = await fetch(`${API_BASE}/api/attendance/settings/active/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      let json
+      try {
+        json = await res.json()
+      } catch (parseErr) {
+        return
+      }
+      const data = parseResponse(json)
+      if (res.ok) setAttendanceSettings(data)
+    } catch (err) {
+      // Abaikan — fallback DAY_REWARDS tetap dipakai
+    }
+  }
+
   useEffect(() => {
     loadStreak()
+    loadSettings()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -156,19 +210,26 @@ function CheckinPage({ onBackClick }) {
     typeof startDate === 'string' &&
     startDate.length === 10 &&
     claimDates.length > 0
+  // Grid reward: pakai setting API bila sudah termuat, fallback ke DAY_REWARDS
+  const cycleDays = attendanceSettings
+    ? Math.max(1, Number(attendanceSettings.daily_cycle_days) || 7)
+    : 7
+  const dayRewards = attendanceSettings
+    ? buildRewardsFromSettings(attendanceSettings) || DAY_REWARDS
+    : DAY_REWARDS
   const claimedCount = Math.min(
-    DAY_REWARDS.length,
+    dayRewards.length,
     Number(streakData?.streak) || 0,
   )
-  const days = DAY_REWARDS.map((day, index) => {
+  const days = dayRewards.map((day, index) => {
     let status = 'upcoming'
-    const isBonus = index === DAY_REWARDS.length - 1
+    const isBonus = index === dayRewards.length - 1
     const isClaimed = useDateBased
       ? isBonus
-        ? claimDates.length >= 7
+        ? claimDates.length >= cycleDays
         : claimDates.includes(datePlusDays(startDate, index))
       : isBonus
-        ? claimedCount >= 7
+        ? claimedCount >= cycleDays
         : index < claimedCount
     if (isClaimed) status = 'completed'
     else if (streakData?.can_claim_today) {

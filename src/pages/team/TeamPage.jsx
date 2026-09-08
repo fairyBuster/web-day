@@ -50,16 +50,19 @@ const navIcons = {
 }
 
 function TeamPage({ onNavigate, onViewBonusHistory }) {
-  const [overview, setOverview] = useState(null)
+  const [statsData, setStatsData] = useState(null)
+  const [membersByLevel, setMembersByLevel] = useState({})
   const [loading, setLoading] = useState(true)
+  const [loadingLevels, setLoadingLevels] = useState([])
   const [error, setError] = useState('')
   const [activeFilter, setActiveFilter] = useState('Semua')
   const [currentPage, setCurrentPage] = useState(1)
 
-  const loadOverview = async () => {
+  // ---- Statistik ringan: cuma angka per level (downline-stats) ----
+  const loadStats = async () => {
     try {
       const token = localStorage.getItem('access_token')
-      const res = await fetch(`${API_BASE}/api/auth/downline-overview/`, {
+      const res = await fetch(`${API_BASE}/api/auth/downline-stats/`, {
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -80,7 +83,7 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
         setError(getErrorMessage(data, 'Gagal memuat data tim.'))
         return
       }
-      setOverview(data)
+      setStatsData(data)
     } catch (err) {
       setError(
         'Terjadi kesalahan koneksi. Tolong segarkan halamannya.',
@@ -90,39 +93,80 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
     }
   }
 
+  // ---- Daftar member per level (downline-list, tanpa riwayat transaksi).
+  // Setiap level yang selesai langsung dirender — sisanya jalan di belakang.
+  const loadLevelMembers = async (level) => {
+    if (loadingLevels.includes(level)) return
+    setLoadingLevels((prev) => [...prev, level])
+    try {
+      const token = localStorage.getItem('access_token')
+      const res = await fetch(
+        `${API_BASE}/api/auth/downline-list/?level=${level}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        },
+      )
+      let json
+      try {
+        json = await res.json()
+      } catch (parseErr) {
+        return
+      }
+      const data = parseResponse(json)
+      if (!res.ok) {
+        // Level kosong/tidak ada (404) bukan error — cukup list kosong
+        if (res.status !== 404) {
+          setError(getErrorMessage(data, 'Gagal memuat anggota.'))
+        }
+        setMembersByLevel((prev) => ({ ...prev, [level]: [] }))
+        return
+      }
+      const list = Array.isArray(data?.members) ? data.members : []
+      setMembersByLevel((prev) => ({ ...prev, [level]: list }))
+    } catch (err) {
+      setMembersByLevel((prev) => ({ ...prev, [level]: [] }))
+    } finally {
+      setLoadingLevels((prev) => prev.filter((l) => l !== level))
+    }
+  }
+
   useEffect(() => {
-    loadOverview()
+    loadStats()
+    // Muat daftar 3 level secara paralel — render progresif per level
+    ;[1, 2, 3].forEach((level) => loadLevelMembers(level))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Halaman hanya menampilkan 3 level (sesuai desain)
-  const levels = (Array.isArray(overview?.levels) ? overview.levels : []).slice(
-    0,
-    3,
-  )
-  const totalMembers = Number(overview?.total_members) || 0
-  const activeMembers = levels.reduce(
-    (sum, lvl) => sum + (Number(lvl.active_member_count) || 0),
-    0,
-  )
-  const inactiveMembers = Math.max(0, totalMembers - activeMembers)
+  // Hanya level 1-3 yang ditampilkan (sesuai desain); API kirim 5 objek
+  const levels = Array.isArray(statsData?.levels)
+    ? statsData.levels.slice(0, 3)
+    : []
+  const sum = (key) =>
+    levels.reduce((acc, lvl) => acc + (Number(lvl[key]) || 0), 0)
+  const totalMembers = sum('members_total')
+  const activeMembers = sum('members_active')
+  const inactiveMembers = sum('members_inactive')
 
-  // Statistik anggota mengikuti filter kategori yang dipilih (Semua / Level N)
+  // Statistik angka mengikuti filter kategori yang dipilih (Semua / Level N)
   const selectedLevel = levels.find(
     (lvl) => `Level ${lvl.level}` === activeFilter,
   )
   const statsTotal = selectedLevel
-    ? Number(selectedLevel.member_count) || 0
+    ? Number(selectedLevel.members_total) || 0
     : totalMembers
   const statsActive = selectedLevel
-    ? Number(selectedLevel.active_member_count) || 0
+    ? Number(selectedLevel.members_active) || 0
     : activeMembers
-  const statsInactive = Math.max(0, statsTotal - statsActive)
+  const statsInactive = selectedLevel
+    ? Number(selectedLevel.members_inactive) || 0
+    : inactiveMembers
 
-  // Total Komisi Tim = komisi profit + komisi pembelian yang dihasilkan jaringan
+  // Total Komisi Tim = komisi profit + komisi pembelian seluruh level
   const totalCommission =
-    (Number(overview?.total_profit_commission) || 0) +
-    (Number(overview?.total_purchase_commission) || 0)
+    sum('profit_commission_amount') + sum('purchase_commission_amount')
 
   const statCards = [
     {
@@ -133,20 +177,19 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
     },
     ...levels.map((lvl) => ({
       label: `Level ${lvl.level}`,
-      total: Number(lvl.member_count) || 0,
-      aktif: `${Number(lvl.active_member_count) || 0} Aktif`,
-      belum: `${
-        (Number(lvl.member_count) || 0) - (Number(lvl.active_member_count) || 0)
-      } Belum`,
+      total: Number(lvl.members_total) || 0,
+      aktif: `${Number(lvl.members_active) || 0} Aktif`,
+      belum: `${Number(lvl.members_inactive) || 0} Belum`,
     })),
   ]
 
   const filters = ['Semua', ...levels.map((lvl) => `Level ${lvl.level}`)]
 
-  // Anggota terbaru (tanggal daftar) tampil paling atas
-  const allMembers = levels
-    .flatMap((lvl) =>
-      (lvl.members || []).map((m) => ({ ...m, level: lvl.level })),
+  // Daftar member: gabungan level yang sudah termuat (progresif),
+  // anggota terbaru (tanggal daftar) tampil paling atas
+  const allMembers = Object.entries(membersByLevel)
+    .flatMap(([level, list]) =>
+      (list || []).map((m) => ({ ...m, level: Number(level) })),
     )
     .sort(
       (a, b) => new Date(b.registration_date) - new Date(a.registration_date),
@@ -165,6 +208,9 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
     (safePage - 1) * PAGE_SIZE,
     safePage * PAGE_SIZE,
   )
+  // Filter terpilih masih memuat & belum ada data → tampilkan pesan memuat
+  const listFilterLoading =
+    filteredMembers.length === 0 && loadingLevels.length > 0
 
   return (
     <div className="min-h-screen bg-background font-sans pb-24">
@@ -183,7 +229,7 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
             >
               <span className="text-[#b7c0dd] text-xs mb-1">{card.label}</span>
               <span className="text-white text-xl font-bold mb-2">
-                {card.total}
+                {loading ? '…' : card.total}
               </span>
               <div className="flex flex-col items-center leading-tight">
                 <span className="text-[#6fe0a0] text-[10px]">{card.aktif}</span>
@@ -218,13 +264,13 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
           <div className="flex-1 flex flex-col items-center border-r border-background">
             <span className="text-textLight text-[11px] mb-1">Total Anggota</span>
             <span className="text-primary text-lg font-bold">
-              {statsTotal}
+              {loading ? '…' : statsTotal}
             </span>
           </div>
           <div className="flex-1 flex flex-col items-center border-r border-background">
             <span className="text-textLight text-[11px] mb-1">Aktif</span>
             <span className="text-[#2fb380] text-lg font-bold">
-              {statsActive}
+              {loading ? '…' : statsActive}
             </span>
           </div>
           <div className="flex-1 flex flex-col items-center">
@@ -232,7 +278,7 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
               Belum Investasi
             </span>
             <span className="text-[#b0b4ba] text-lg font-bold">
-              {statsInactive}
+              {loading ? '…' : statsInactive}
             </span>
           </div>
         </div>
@@ -263,17 +309,25 @@ function TeamPage({ onNavigate, onViewBonusHistory }) {
 
         {/* Member List Card */}
         <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+          {loadingLevels.length > 0 && filteredMembers.length > 0 && (
+            <p className="text-[11px] text-textLight text-center">
+              Memuat anggota lainnya...
+            </p>
+          )}
           {loading ? (
             <p className="text-textLight text-sm text-center py-6">
               Memuat anggota tim...
             </p>
           ) : filteredMembers.length === 0 ? (
             <p className="text-textLight text-sm text-center py-6">
-              Belum ada anggota downline.
+              {listFilterLoading
+                ? 'Memuat anggota...'
+                : 'Belum ada anggota downline.'}
             </p>
           ) : (
             pagedMembers.map((member, index) => {
-              const isInvesting = Number(member.total_investments) > 0
+              const isInvesting =
+                  Number(member.total_investment_amount || member.total_investment || 0) > 0
               return (
                 <div
                   key={`${member.level}-${member.username}-${index}`}

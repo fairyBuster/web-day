@@ -133,56 +133,82 @@ function DepositPage({ onBackClick, onPayWithQris, onPayWithVa }) {
         return
       }
 
-      // 1c) Metode Lainnya — QRIS manual (static-to-dynamic), dapat gambar QR
-      if (method === 'lainnya') {
-        const qrisRes = await fetch(`${API_BASE}/api/deposits/qris/initiate/`, {
+      // 1b) Metode QRIS — NextPay: initiate lalu select-method (2 request)
+      if (method === 'qris') {
+        const initRes = await fetch(`${API_BASE}/api/deposits/nextpay/initiate/`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
             amount: numeric,
             wallet_type: 'BALANCE_DEPOSIT',
+            expiry_period: 30,
           }),
         })
-        let qrisJson
+        let initJson
         try {
-          qrisJson = await qrisRes.json()
+          initJson = await initRes.json()
         } catch (parseErr) {
           setError('Gagal memproses deposit. Silakan coba lagi.')
           return
         }
-        const qrisData = parseResponse(qrisJson)
-        if (!qrisRes.ok) {
-          setError(qrisData?.message || qrisData?.detail || 'Gagal memproses deposit.')
+        const initData = parseResponse(initJson)
+        if (!initRes.ok) {
+          setError(initData?.message || initData?.detail || 'Gagal memproses deposit.')
           return
         }
-        if (!qrisData?.qr_image) {
+        if (!initData?.ref_id) {
+          setError('Referensi transaksi tidak ditemukan dari server.')
+          return
+        }
+        // 2) Pilih metode QRIS — dapat pay_data (string QRIS, dirender jadi QR)
+        const methodRes = await fetch(
+          `${API_BASE}/api/deposits/nextpay/select-method/`,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              ref_id: initData.ref_id,
+              method: 'QRIS',
+            }),
+          },
+        )
+        let methodJson
+        try {
+          methodJson = await methodRes.json()
+        } catch (parseErr) {
+          setError('Gagal memuat metode pembayaran. Silakan coba lagi.')
+          return
+        }
+        const methodData = parseResponse(methodJson)
+        if (!methodRes.ok) {
+          setError(
+            methodData?.message || methodData?.detail || 'Gagal memuat metode pembayaran.',
+          )
+          return
+        }
+        if (!methodData?.pay_data) {
           setError('Kode QR tidak ditemukan dari server.')
           return
         }
+        // 3) Buka halaman pembayaran QRIS — countdown dari expires_at
         onPayWithQris({
-          ref_id: qrisData.order_num || '',
-          merchant_ref: qrisData.order_num || '',
-          amount: qrisData.qris_amount || numeric,
-          qris_amount: qrisData.qris_amount || 0,
-          unique_code: qrisData.unique_code || 0,
-          message: qrisData.message || '',
-          qr_image: qrisData.qr_image || '',
-          pay_data: '',
-          pay_data_type: 'QR_IMAGE',
-          expires_at: qrisData.expired_at || '',
-          expired_minutes: qrisData.expired_minutes || 0,
+          order_num: initData.order_num || '',
+          ref_id: initData.ref_id,
+          amount: initData.amount || numeric,
+          pay_data: methodData.pay_data,
+          pay_data_type: methodData.pay_data_type || 'QR_CODE',
+          expires_at: initData.expires_at || methodData.expires_at || '',
         })
         return
       }
 
-      // 1b) Metode QRIS — initiate deposit, dapat ref_id
-      const initRes = await fetch(`${API_BASE}/api/deposits/batpay/initiate/`, {
+      // 1c) Metode Lainnya — QRIS manual, langsung dapat data QR
+      const initRes = await fetch(`${API_BASE}/api/deposits/qris/initiate/`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           amount: numeric,
           wallet_type: 'BALANCE_DEPOSIT',
-          expiry_period: 1440,
         }),
       })
       let initJson
@@ -197,48 +223,21 @@ function DepositPage({ onBackClick, onPayWithQris, onPayWithVa }) {
         setError(initData?.message || initData?.detail || 'Gagal memproses deposit.')
         return
       }
-      if (!initData?.ref_id) {
-        setError('Referensi transaksi tidak ditemukan dari server.')
-        return
-      }
-      // 2) Pilih metode QRIS — dapat pay_data (konten QR)
-      const methodRes = await fetch(
-        `${API_BASE}/api/deposits/batpay/select-method/`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            ref_id: initData.ref_id,
-            method: 'QRIS',
-          }),
-        },
-      )
-      let methodJson
-      try {
-        methodJson = await methodRes.json()
-      } catch (parseErr) {
-        setError('Gagal memuat metode pembayaran. Silakan coba lagi.')
-        return
-      }
-      const methodData = parseResponse(methodJson)
-      if (!methodRes.ok) {
-        setError(
-          methodData?.message || methodData?.detail || 'Gagal memuat metode pembayaran.',
-        )
-        return
-      }
-      if (!methodData?.pay_data) {
+      if (!initData?.qr_image && !initData?.pay_data) {
         setError('Kode QR tidak ditemukan dari server.')
         return
       }
-      // 3) Buka halaman pembayaran QRIS
+      // 2) Buka halaman pembayaran QRIS — tagihan = qris_amount (sudah + kode unik)
       onPayWithQris({
-        ref_id: initData.ref_id,
-        merchant_ref: initData.order_num || methodData.merchant_ref || '',
-        amount: initData.amount || numeric,
-        pay_data: methodData.pay_data,
-        pay_data_type: methodData.pay_data_type || 'QR_CODE',
-        expires_at: initData.expires_at || '',
+        order_num: initData.order_num || '',
+        ref_id: initData.order_num || '',
+        amount: initData.qris_amount || initData.amount || numeric,
+        pay_data: initData.pay_data || '',
+        pay_data_type: 'QR_CODE',
+        qr_image: initData.qr_image || '',
+        expires_at: initData.expired_at || '',
+        expired_minutes: initData.expired_minutes,
+        message: initData.message || '',
       })
     } catch (err) {
       setError('Gagal memproses deposit. Silakan coba lagi.')
